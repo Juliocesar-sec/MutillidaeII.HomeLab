@@ -1,69 +1,49 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>OWASP Mutillidae II Home Lab - Kali Linux Setup</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            background: #f9f9f9;
-            color: #333;
-        }
-        pre {
-            background: #272822;
-            color: #f8f8f2;
-            padding: 1rem;
-            overflow-x: auto;
-            border-radius: 5px;
-        }
-        code {
-            font-family: Consolas, monospace;
-        }
-        h1, h2 {
-            color: #007acc;
-        }
-        hr {
-            margin: 2rem 0;
-            border: none;
-            border-top: 1px solid #ccc;
-        }
-    </style>
-</head>
-<body>
-    <h1>OWASP Mutillidae II Home Lab - Kali Linux Setup</h1>
+OWASP Mutillidae II Home Lab
 
-    <p>Este guia explica como baixar e rodar o OWASP Mutillidae II no Kali Linux usando Docker.</p>
+A step-by-step guide to download and run OWASP Mutillidae II, a deliberately vulnerable web application for learning web security, using Docker on Kali Linux.
+Prerequisites
 
-    <h2>Passo 1: Atualize seu sistema</h2>
-    <pre><code>sudo apt update &amp;&amp; sudo apt upgrade -y</code></pre>
+    Kali Linux (or any Linux distribution)
 
-    <h2>Passo 2: Instale Git, Docker e Docker Compose (se ainda não instalou)</h2>
-    <pre><code>sudo apt install git docker.io docker-compose -y
+    Git installed
+
+    Docker and Docker Compose installed and running
+
+    Note: If Git or Docker are not installed, follow the installation instructions below.
+
+Installing Git and Docker on Kali Linux
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install git docker.io docker-compose -y
 sudo systemctl start docker
 sudo systemctl enable docker
-</code></pre>
 
-    <h2>Passo 3: Clone o repositório Mutillidae II</h2>
-    <pre><code>git clone https://github.com/webpwnized/mutillidae.git</code></pre>
+Step 1: Clone the Mutillidae II Repository
 
-    <h2>Passo 4: Crie os arquivos <code>Dockerfile</code> e <code>docker-compose.yml</code></h2>
+Clone the official Mutillidae II repository from GitHub:
 
-    <h3>Dockerfile</h3>
-    <pre><code>FROM php:7.4-apache
+git clone https://github.com/webpwnized/mutillidae.git
 
-RUN docker-php-ext-install mysqli pdo pdo_mysql &amp;&amp; \
+Change into the cloned directory:
+
+cd mutillidae
+
+Step 2: Create the Dockerfile
+
+In your project root directory (where you want to run the containers), create a file named Dockerfile with the following content:
+
+FROM php:7.4-apache
+
+RUN docker-php-ext-install mysqli pdo pdo_mysql && \
     a2enmod rewrite
 
 EXPOSE 80
-</code></pre>
 
-    <h3>docker-compose.yml</h3>
-    <pre><code>version: '3.8'
+Step 3: Create the docker-compose.yml File
+
+Create a file named docker-compose.yml in the same directory with the following content:
+
+version: '3.8'
 
 services:
   web:
@@ -86,16 +66,17 @@ services:
 
 volumes:
   db_data:
-</code></pre>
 
-    <h2>Passo 5: Inicie o ambiente com Docker Compose</h2>
-    <pre><code>docker-compose up --build</code></pre>
+Step 4: Start the Environment
 
-    <h2>Passo 6: Acesse o Mutillidae II</h2>
-    <p>Abra no navegador:</p>
-    <pre><code>http://localhost:8080</code></pre>
+Build and start the Docker containers by running:
 
-    <hr />
-    <p>Pronto! Você já tem o Mutillidae II rodando no Kali Linux, via Docker.</p>
-</body>
-</html>
+docker-compose up --build
+
+Once started, access Mutillidae II in your browser at:
+
+http://localhost:8080
+
+Step 5: Explore and Learn
+
+Open the URL above and start exploring the security vulnerabilities in Mutillidae II for educational purposes.
