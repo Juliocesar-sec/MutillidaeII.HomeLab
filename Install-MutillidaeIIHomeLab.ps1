@@ -1,127 +1,101 @@
-#
-💻 PowerShell Script for Automation of MutillidaeII Home Lab
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OWASP Mutillidae II Home Lab - Kali Linux Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background: #f9f9f9;
+            color: #333;
+        }
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 1rem;
+            overflow-x: auto;
+            border-radius: 5px;
+        }
+        code {
+            font-family: Consolas, monospace;
+        }
+        h1, h2 {
+            color: #007acc;
+        }
+        hr {
+            margin: 2rem 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>OWASP Mutillidae II Home Lab - Kali Linux Setup</h1>
 
-This PowerShell script automates the installation and configuration process of OWASP Mutillidae II in a Windows environment, using XAMPP as a web server.
+    <p>Este guia explica como baixar e rodar o OWASP Mutillidae II no Kali Linux usando Docker.</p>
 
-📌 Prerequisites:
+    <h2>Passo 1: Atualize seu sistema</h2>
+    <pre><code>sudo apt update &amp;&amp; sudo apt upgrade -y</code></pre>
 
-- Internet access.
+    <h2>Passo 2: Instale Git, Docker e Docker Compose (se ainda não instalou)</h2>
+    <pre><code>sudo apt install git docker.io docker-compose -y
+sudo systemctl start docker
+sudo systemctl enable docker
+</code></pre>
 
-- PowerShell running as Administrator.
+    <h2>Passo 3: Clone o repositório Mutillidae II</h2>
+    <pre><code>git clone https://github.com/webpwnized/mutillidae.git</code></pre>
 
-- Ports 80 (Apache) and 3306 (MySQL) free.
+    <h2>Passo 4: Crie os arquivos <code>Dockerfile</code> e <code>docker-compose.yml</code></h2>
 
-- Release temporary execution policy if needed:
-Set-ExecutionPolicy RemoteSigned -Scope Process
-#>
+    <h3>Dockerfile</h3>
+    <pre><code>FROM php:7.4-apache
 
-# --- Variables ---
-$XAMPPInstallerURL = "https://www.apachefriends.org/xampp-files/8.2.4/xampp-windows-x64-8.2.4-0-VS16.exe"
-$XAMPPInstallerName = "xampp-installer.exe"
-$XAMPPInstallPath = "C:\xampp"
+RUN docker-php-ext-install mysqli pdo pdo_mysql &amp;&amp; \
+    a2enmod rewrite
 
-$MutillidaeZipURL = "https://github.com/Juliocesar-sec/MutillidaeII.HomeLab/archive/refs/heads/main.zip"
-$MutillidaeZipName = "MutillidaeII.HomeLab.zip"
-$MutillidaeExtractPath = "$XAMPPInstallPath\htdocs"
-$MutillidaeFinalPath = Join-Path -Path $MutillidaeExtractPath -ChildPath "mutillidae"
-$LogFile = "Mutillidae_Install_Log.txt"
+EXPOSE 80
+</code></pre>
 
-# --- Functions ---
-function Write-Log {
-stop (
-[string]$Message,
-[string]$Level = "INFO"
-)
-$Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-$Entry = "[$Timestamp] [$Level] $Message"
-Write-Host $Entry
-Add-Content -Path $LogFile -Value $Entry
-}
+    <h3>docker-compose.yml</h3>
+    <pre><code>version: '3.8'
 
-function Download-File {
-stop (
-[string]$URL,
-[string]$Destination
-)
-if (-not (Test-Path $Destination)) {
-Write-Log "Downloading $URL to $Destination"
-try {
-Invoke-WebRequest -Uri $URL -OutFile $Destination -UseBasicParsing -TimeoutSec 600
-Write-Log "Download completed successfully." } get {
-Write-Log "Error downloading $URL: $($_.Exception.Message)" "ERROR"
-output 1
-}
-} else {
-Write-Log "File already exists: $Destination"
-}
-}
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./mutillidae:/var/www/html
+    depends_on:
+      - db
 
-function Extract-Zip {
-parameter (
-[string]$ZipFile,
-[string]$Destination
-)
-Write-Log "Extracting $ZipFile to $Dest"
-try {
-Expand-Archive -Path $ZipFile -DestinationPath $Dest -Force
-Write-Log "Extraction complete." } get {
-Write-Log "Error deleting: $($_.Exception.Message)" "ERROR"
-output 1
-}
-}
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mutillidae
+      MYSQL_DATABASE: mutillidae
+    volumes:
+      - db_data:/var/lib/mysql
 
-# --- Execution ---
-Write-Log "🛠️ Starting the Mutillidae II Home Lab installation process"
+volumes:
+  db_data:
+</code></pre>
 
-# 1. Download XAMPP
-Download file $XAMPPInstallerURL $XAMPPInstallerName
+    <h2>Passo 5: Inicie o ambiente com Docker Compose</h2>
+    <pre><code>docker-compose up --build</code></pre>
 
-# 2. Install XAMPP
-Write-Log "Running XAMPP installer. Install manually at $XAMPPInstallPath"
+    <h2>Passo 6: Acesse o Mutillidae II</h2>
+    <p>Abra no navegador:</p>
+    <pre><code>http://localhost:8080</code></pre>
 
-Pause
-Start-Process -FilePath $XAMPPInstallerName -Wait
-
-if (-not (Test Path $XAMPPInstallPath)) {
-Write-Log "XAMPP not found at $XAMPPInstallPath" "ERROR"
-output 1
-}
-
-# 3. Download Mutillidae
-Download file $MutillidaeZipURL $MutillidaeZipName
-
-# 4. Extract and move
-Extract-Zip $MutillidaeZipName $MutillidaeExtractPath
-
-$SourceDir = Join-Path $MutillidaeExtractPath "MutillidaeII.HomeLab-main"
-if (Test-Path $SourceDir) {
-if (-not (Test-Path $MutillidaeFinalPath)) {
-New-Item -Item-Type -Directory -Path $MutillidaeFinalPath | Output-Null
-}
-Get-Child-Item -Path $SourceDir | ForEach-Object {
-Move-Item -Path $_.FullName -Destination $MutillidaeFinalPath -Force
-}
-Remove-Item -Path $SourceDir -Recurse -Force
-Write-Log "Files moved to $MutillidaeFinalPath"
-} else {
-Write-Log "Directory $SourceDir not found." "ERROR"
-output 1
-}
-
-# 5. Final Instructions
-Write-Log "Please open the XAMPP Control Panel and start Apache and MySQL."
-Write-Log "Go to http://localhost/phpmyadmin and click on the 'owasp10' database."
-Write-Log "Then go to http://localhost/mutillidae/setup.php to configure the application."
-Pause
-
-# 6. Success!
-Write-Log "✅ Mutillidae II successfully installed! Access at: http://localhost/mutillidae"
-
-# 7. Cleanup
-$cleanup = Read-Host "Do you want to temporarily disable the installed ones? (y/n)"
-if ($cleanup -eq "y") {
-Remove-Item $XAMPPInstallerName, $MutillidaeZipName -Force -ErrorAction SilentlyContinue
-Write-Log "Installers removed."
-}
-
-Write-Log "🧪 MutillidaeII Home Lab Environment ready to use!"
+    <hr />
+    <p>Pronto! Você já tem o Mutillidae II rodando no Kali Linux, via Docker.</p>
+</body>
+</html>
